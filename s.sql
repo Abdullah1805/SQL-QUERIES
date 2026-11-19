@@ -316,3 +316,15 @@ FROM RankedSalaries
 WHERE salary_rank <= 3
 ORDER BY department_id, salary_rank
 ;
+
+/* CREATE A VIEW THAT SHOWS TOTAL SALES PER CUSTOMER */
+go
+CREATE VIEW sales.TotalSalesPerCustomer AS
+    
+    SELECT
+        c.customer_id,
+        c.customer_name,
+        SUM(o.total_amount) AS total_sales
+    FROM customers c
+    JOIN orders o ON c.customer_id = o.customer_id
+    GROUP BY c.customer_id, c.customer_name
