@@ -8,51 +8,51 @@ FROM orders;
 /* FIND TOTAL SALES PER QUARTER */
 
 SELECT 
-    DATE_PART('quarter', order_date) AS quarter,
-    SUM(total_amount) OVER (PARTITION BY DATE_PART('quarter', order_date)) AS total_sales_per_quarter
+    DATEPART('quarter', order_date) AS quarter,
+    SUM(total_amount) OVER (PARTITION BY DATEPART('quarter', order_date)) AS total_sales_per_quarter
 FROM orders;
 
 
 /* FIND TOTAL SALES PER YEAR */
 SELECT 
-    DATE_PART('year', order_date) AS year,
+    DATEPART('year', order_date) AS year,
     SUM(total_amount) OVER (PARTITION BY DATE_PART('year', order_date)) AS total_sales_per_year
 FROM orders;
 
 /* FIND TOTAL SALES PER MONTH AND SUBTRACT PREVIOUS MONTH'S SALES */
 SELECT 
-    DATE_PART('month', order_date) AS month,
-    SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date)) AS total_sales_per_month,
-    LAG(SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date))) OVER (ORDER BY DATE_PART('month', order_date)) AS previous_month_sales
+    DATEPART('month', order_date) AS month,
+    SUM(total_amount) OVER (PARTITION BY DATEPART('month', order_date)) AS total_sales_per_month,
+    LAG(SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date))) OVER (ORDER BY DATEPART('month', order_date)) AS previous_month_sales
 FROM orders;
 
 
 /* FIND TOTAL SALES PER MONTH AND SUBTRACT IT FROM NEXT MONTH'S SALES */
 SELECT 
-    DATE_PART('month', order_date) AS month,
+    DATEPART('month', order_date) AS month,
     SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date)) AS total_sales_per_month,
     LEAD(SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date))) OVER (ORDER BY DATE_PART('month', order_date)) AS next_month_sales
 FROM orders;
 
 /* FIND TOTAL SALES PER MONTH FOR EACH PRODUCT ORDERED DESCENDING BY SALES */
 SELECT 
-    DATE_PART('month', order_date) AS month,
+    DATEPART('month', order_date) AS month,
     product_id,
-    SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date), product_id ) AS total_sales_per_month_per_product
+    SUM(total_amount) OVER (PARTITION BY DATEPART('month', order_date), product_id ) AS total_sales_per_month_per_product
 FROM orders
 ORDER BY total_sales_per_month_per_product DESC;
 
 /* CHECK IF THERE IS NULL IN COLUMN SALES AND REPLACE IT WITH 0 BEFORE AGGREGATION */
 
 SELECT
-    DATE_PART('month', order_date) AS month,
+    DATEPART('month', order_date) AS month,
     product_id,
     COALESCE(SUM(total_amount), 0) AS total_sales_per_month_per_product
 FROM orders
-GROUP BY DATE_PART('month', order_date), product_id
+GROUP BY DATEPART('month', order_date), product_id
 ORDER BY total_sales_per_month_per_product DESC;
 
-/* JOIN TABLE ORDERS WITH TABLE CUSTOMERS WHERE SHOW ORDERS AND CUSTOMERS EVEN ORDERS WITHOUT CUSTOMERS DETAILS */
+/* JOIN TABLE ORDERS WITH TABLE CUSTOMERS TO SHOW ORDERS AND CUSTOMERS EVEN ORDERS WITHOUT CUSTOMERS DETAILS */
 SELECT 
     o.order_id,
     o.order_date,
@@ -62,7 +62,7 @@ SELECT
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.customer_id;
 
-/* JOIN TABLE ORDERS WITH TABLE CUSTOMERS WHERE ORDERS AND CUSTOMERS BOTH AVAILABLE  */
+/* JOIN TABLE ORDERS WITH TABLE CUSTOMERS WHERE ORDERS AND CUSTOMERS ARE BOTH AVAILABLE  */
 SELECT 
     o.order_id,
     o.order_date,
@@ -74,7 +74,7 @@ INNER JOIN customers c
 ON o.customer_id = c.customer_id;
 
 
-/* SHOW USERS HOW DIDN'T MAKE ANY ORDERS YET */
+/* SHOW USERS WHO DIDN'T MAKE ANY ORDERS YET */
 SELECT 
     c.customer_id,
     c.customer_name
@@ -83,7 +83,7 @@ LEFT JOIN orders o ON c.customer_id = o.customer_id
 WHERE o.customer_id IS NULL
 ;
 
-/* COUNT USERS HOW DIDN'T MAKE ANY ORDERS YET */
+/* COUNT USERS WHO DIDN'T MAKE ANY ORDERS YET */
 SELECT 
     COUNT(c.customer_id) AS users_without_orders
 FROM customers c
@@ -114,7 +114,7 @@ ORDER BY total_sales DESC
 ;
 
 
-/* CATEGORIZE PRODUCTS BY PRICE RANGE AND AFTER THAT SHOW TOTAL SALES FOR EACH CATEGORY */
+/* CATEGORIZE PRODUCTS BY PRICE RANGE AND THEN SHOW TOTAL SALES FOR EACH CATEGORY */
 SELECT 
     CASE 
         WHEN p.price < 10 THEN 'Low'
@@ -130,13 +130,13 @@ ORDER BY total_sales DESC
 
 /* SHOW HIGHEST PRODUCT SALES EVERY MONTH */
 SELECT 
-    DATE_PART('month', o.order_date) AS month,
+    DATEPART('month', o.order_date) AS month,
     o.product_id,
     p.product_name,
     SUM(o.total_amount) AS total_sales
 FROM orders o
 JOIN products p ON o.product_id = p.product_id
-GROUP BY DATE_PART('month', o.order_date), o.product_id, p.product_name
+GROUP BY DATEPART('month', o.order_date), o.product_id, p.product_name
 ORDER BY month, total_sales DESC
 ;
 
@@ -153,14 +153,14 @@ GROUP BY product_id, product_name
 
 /* RANK MONTHS BY SALES */
 SELECT 
-    DATE_PART('month', o.order_date) AS month,
+    DATEPART('month', o.order_date) AS month,
     SUM(o.total_amount) AS total_sales,
     RANK() OVER (ORDER BY SUM(o.total_amount) DESC) AS sales_rank
 FROM orders o
-GROUP BY DATE_PART('month', o.order_date)
+GROUP BY DATEPART('month', o.order_date)
 ORDER BY month;
 
-/* DIVIDE PRODUCTS BY SALES TO 5 GROUPS */
+/* DIVIDE PRODUCTS BY SALES INTO 5 GROUPS */
 SELECT 
     product_id,
     product_name,
@@ -179,7 +179,7 @@ SELECT
 FROM employees
 WHERE city = 'BAGHDAD';
 
-/* SEARCH FOR FEMALE CUSTOMERS WHO ARE FROM A SPECIFIC CITY AND AND THEIR AGE IS LESS THAN 30  AND COUNT THEM */
+/* SEARCH FOR FEMALE CUSTOMERS WHO ARE FROM A SPECIFIC CITY AND THEIR AGE IS LESS THAN 30  AND COUNT THEM */
 SELECT
     *,
     COUNT(*) AS female_customers_count
@@ -188,7 +188,7 @@ WHERE city = 'BAGHDAD' AND gender = 'Female' AND age < 30
 GROUP BY city, gender, age
 ;
 
-/* SEARCH FOR FEMALE CUSTOMERS WHO ARE FROM A SPECIFIC CITY AND AND THEIR AGE IS LESS THAN 30
+/* SEARCH FOR FEMALE CUSTOMERS WHO ARE FROM A SPECIFIC CITY AND WHOSE AGE IS LESS THAN 30
   AND COUNT THEM AND RANK THEM BASED ON THEIR SALES */
 SELECT
     *,
@@ -215,7 +215,7 @@ FROM (
 WHERE average_sales_per_customer > (SELECT AVG(average_sales_per_customer) FROM customer_averages)
 ;
 
-/* SHOW ALL DEPARTMENTS WHO HAVE EMPLOYEES MORE THAB MARKETING DEPARTMENTS */
+/* SHOW ALL DEPARTMENTS WHO HAVE EMPLOYEES MORE THAN THE MARKETING DEPARTMENT */
 SELECT 
     d.department_id,
     d.department_name,
