@@ -1,1 +1,1 @@
-I wrote more than 24 SQL queries as a project to show some of my skills in SQL.
+I wrote more than 25 SQL queries as part of a project to demonstrate my SQL skills.
