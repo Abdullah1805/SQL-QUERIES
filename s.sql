@@ -19,27 +19,53 @@ SELECT
     SUM(total_amount) OVER (PARTITION BY DATE_PART('year', order_date)) AS total_sales_per_year
 FROM orders;
 
-/* FIND TOTAL SALES PER MONTH AND SUBTRACT PREVIOUS MONTH'S SALES */
-SELECT 
-    DATEPART('month', order_date) AS month,
-    SUM(total_amount) OVER (PARTITION BY DATEPART('month', order_date)) AS total_sales_per_month,
-    LAG(SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date))) OVER (ORDER BY DATEPART('month', order_date)) AS previous_month_sales
-FROM orders;
+/* FIND TOTAL SALES PER MONTH AND SUBTRACT NEXT MONTH'S SALES */
+ WITH monthly_sales AS (
+    SELECT
+        YEAR(order_date)  AS year,
+        MONTH(order_date) AS month,
+        SUM(total_amount) AS total_sales_per_month
+    FROM orders
+    GROUP BY YEAR(order_date), MONTH(order_date)
+)
+SELECT
+    year,
+    month,
+    total_sales_per_month,
+    LEAD(total_sales_per_month) OVER (ORDER BY year, month) AS next_month_sales,
+    LEAD(total_sales_per_month) OVER (ORDER BY year, month)
+        - total_sales_per_month AS diff_to_next_month
+FROM monthly_sales
+ORDER BY year, month;
 
 
-/* FIND TOTAL SALES PER MONTH AND SUBTRACT IT FROM NEXT MONTH'S SALES */
-SELECT 
-    DATEPART('month', order_date) AS month,
-    SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date)) AS total_sales_per_month,
-    LEAD(SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date))) OVER (ORDER BY DATE_PART('month', order_date)) AS next_month_sales
-FROM orders;
+/* FIND TOTAL SALES PER MONTH AND SUBTRACT IT FROM LAST MONTH'S SALES */
+WITH monthly_sales AS (
+    SELECT
+        YEAR(order_date)  AS [year],
+        MONTH(order_date) AS [month],
+        SUM(total_amount) AS total_sales_per_month
+    FROM orders
+    GROUP BY YEAR(order_date), MONTH(order_date)
+)
+SELECT
+    [year],
+    [month],
+    total_sales_per_month,
+    LAG(total_sales_per_month) OVER (ORDER BY [year], [month]) AS previous_month_sales,
+    total_sales_per_month
+        - LAG(total_sales_per_month) OVER (ORDER BY [year], [month]) AS diff_from_previous_month
+FROM monthly_sales
+ORDER BY [year], [month];
 
 /* FIND TOTAL SALES PER MONTH FOR EACH PRODUCT ORDERED DESCENDING BY SALES */
-SELECT 
-    DATEPART('month', order_date) AS month,
+SELECT
+    YEAR(order_date)  AS [year],
+    MONTH(order_date) AS [month],
     product_id,
-    SUM(total_amount) OVER (PARTITION BY DATEPART('month', order_date), product_id ) AS total_sales_per_month_per_product
+    SUM(total_amount) AS total_sales_per_month_per_product
 FROM orders
+GROUP BY YEAR(order_date), MONTH(order_date), product_id
 ORDER BY total_sales_per_month_per_product DESC;
 
 /* CHECK IF THERE IS NULL IN COLUMN SALES AND REPLACE IT WITH 0 BEFORE AGGREGATION */
