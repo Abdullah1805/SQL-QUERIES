@@ -1,7 +1,7 @@
 /* FIND TOTAL SALES PER MONTH */
 
 SELECT 
-    DATE_PART('month', order_date) AS month,
+    DATEPART('month', order_date) AS month,
     SUM(total_amount) OVER (PARTITION BY DATE_PART('month', order_date)) AS total_sales_per_month
 FROM orders;
 
@@ -233,5 +233,30 @@ HAVING COUNT(e.employee_id) > (
     )
 )
 ;
+
+/* SHOW THE TOP 3 SALARIES IN EACH DEPARTMENT AT THE COMPANY */
+WITH RankedSalaries AS (
+    SELECT 
+        e.employee_id,
+        e.employee_name,
+        e.salary,
+        e.department_id,
+        RANK() OVER (PARTITION BY e.department_id ORDER BY e.salary DESC) AS salary_rank
+    FROM employees e
+)
+SELECT 
+    employee_id,
+    employee_name,
+    salary,
+    department_id,
+    salary_rank
+FROM RankedSalaries
+WHERE salary_rank <= 3
+ORDER BY department_id, salary_rank
+;
+
+
+
+
 
 
